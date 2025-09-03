@@ -247,7 +247,7 @@ with gb:
             st.session_state.final_time = int(time.time() - st.session_state.start_time)
         st.markdown(f"<p style='font-size:12px; text-align:center;'>Final: {found_ct}/{total}<br>⏱ {st.session_state.final_time}s</p>", unsafe_allow_html=True)
 
-        share_text = f"I scored {found_ct}/{total} in {st.session_state.final_time}s on the NFL Box Score Guesser! 🏈"
+        share_text = f"I scored {found_ct}/{total} in {st.session_state.final_time}s on the NFL Box Score Guesser! 🏈 Play at BoxScoreGuesser.com"
         url = "https://x.com/intent/tweet?text=" + urllib.parse.quote(share_text)
         st.markdown(f"<p style='text-align:center;'><a href='{url}' target='_blank'>Share on X</a></p>", unsafe_allow_html=True)
 

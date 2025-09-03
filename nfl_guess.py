@@ -12,7 +12,7 @@ def get_base64_image(image_path):
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode()
 
-# Load team logos (make sure these files exist in the same folder)
+# Load team logos
 patriots_logo = get_base64_image("patriots_logo.png")
 falcons_logo = get_base64_image("falcons_logo.png")
 
@@ -92,7 +92,6 @@ def build_df(stats_dict, found, game_over, parser, cols):
 def df_to_html(df):
     if df.empty:
         return ""
-    # highlight guessed rows
     def row_style(row):
         if row["Player"] != "—":
             return ' style="background-color:#c6efce; color:#006100;"'
@@ -115,42 +114,95 @@ def df_to_html(df):
 # =========================
 st.set_page_config(layout="centered")
 
+# Responsive CSS
 st.markdown("""
-    <style>
-    .block-container { padding-top: 3rem; padding-bottom: 0rem; }
-    @media (max-width: 768px) {
-        .block-container { padding-top: 1rem; }
-    }
-    table, th, td {
-        border: 1px solid #ddd;
-        padding: 2px 6px;
-    }
-    th {
-        background-color: #f2f2f2;
-        text-align: center;
-    }
-    td {
-        text-align: center;
-    }
-    td:first-child, th:first-child {
-        text-align: left;
-        min-width: 120px;
-        white-space: nowrap;
-    }
-    </style>
+<style>
+/* ==== Desktop defaults ==== */
+.block-container { padding-top: 3rem; padding-bottom: 0rem; }
+table, th, td {
+    border: 1px solid #ddd;
+    padding: 2px 6px;
+}
+th {
+    background-color: #f2f2f2;
+    text-align: center;
+}
+td {
+    text-align: center;
+}
+td:first-child, th:first-child {
+    text-align: left;
+    min-width: 140px;
+    white-space: nowrap;
+}
+
+/* ==== Desktop defaults ==== */
+.desktop-header { display: flex; align-items: center; }
+.desktop-header > div { flex: 1; }
+
+/* ==== Mobile tweaks ==== */
+@media (max-width: 768px) {
+  .desktop-header {
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+  }
+  .desktop-header .score-col {
+    order: 2;
+    width: 100%;
+    margin-top: 6px;
+  }
+  .desktop-header .stadium-col {
+    order: 3;
+    width: 100%;
+    margin-top: 6px;
+    text-align: center;
+  }
+  .desktop-header .logo {
+    order: 1;
+    flex: 0 0 auto;
+    margin: 0 12px;
+  }
+
+  /* 👇 Add these font+logo size tweaks inside the same block */
+  .desktop-header .score-col div:first-child {
+    font-size: 0.5em !important;  /* title */
+  }
+  .desktop-header .score-col div:last-child {
+    font-size: 0.5em !important; /* score */
+  }
+  .desktop-header .stadium-col {
+    font-size: 0.1em !important;
+    text-align: center !important;
+  }
+  .desktop-header .logo img {
+    height: 45px !important;
+  }
+}
+</style>
 """, unsafe_allow_html=True)
 
-# ===== Header with logos =====
-col1, col2, col3, spacer, col4 = st.columns([2,4,2,2,4])
-with col1:
-    st.markdown(f"<img src='data:image/png;base64,{patriots_logo}' style='height:60px; margin-top:-8px;'>", unsafe_allow_html=True)
-with col2:
-    st.markdown(f"<div style='text-align:center;font-weight:600;font-size:1.1em;'>{game_info['title']}</div>", unsafe_allow_html=True)
-    st.markdown(f"<div style='text-align:center;font-size:1em;color:#333;'>{game_info['score']}</div>", unsafe_allow_html=True)
-with col3:
-    st.markdown(f"<img src='data:image/png;base64,{falcons_logo}' style='height:60px; margin-top:8px; float:right;'>", unsafe_allow_html=True)
-with col4:
-    st.markdown(f"<div style='font-size:0.9em; text-align:right;'><b>Stadium:</b> {game_info['stadium']}<br><b>Date:</b> {game_info['date']}<br><b>Attendance:</b> {game_info['attendance']}</div>", unsafe_allow_html=True)
+
+# ===== Header (desktop 4-column, stacks on mobile) =====
+st.markdown(f"""
+<div class="desktop-header">
+  <div>
+    <img src='data:image/png;base64,{patriots_logo}' style='height:60px; margin-top:-8px;'>
+  </div>
+  <div>
+    <div style='font-weight:600;font-size:1.1em;'>{game_info['title']}</div>
+    <div style='font-size:1em;color:#333;'>{game_info['score']}</div>
+  </div>
+  <div>
+    <img src='data:image/png;base64,{falcons_logo}' style='height:60px; margin-top:8px;'>
+  </div>
+  <div style="font-size:0.9em; text-align:right;">
+    <b>Stadium:</b> {game_info['stadium']}<br>
+    <b>Date:</b> {game_info['date']}<br>
+    <b>Attendance:</b> {game_info['attendance']}
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
 # ===== State =====
 if "start_time" not in st.session_state: st.session_state.start_time = time.time()
@@ -177,7 +229,7 @@ if submitted and guess and not st.session_state.game_over:
     for player in all_players:
         parts = player.lower().split()
         last_name = parts[-1] if parts else player.lower()
-        if g == player.lower() or g == last_name:   # full name OR last name
+        if g == player.lower() or g == last_name:
             st.session_state.found.add(player)
             matched = True
     if not matched and g not in [w.lower() for w in st.session_state.wrong]:
@@ -194,14 +246,12 @@ with gb:
             st.session_state.final_time = int(time.time() - st.session_state.start_time)
         st.markdown(f"<p style='font-size:12px; text-align:center;'>Final: {found_ct}/{total}<br>⏱ {st.session_state.final_time}s</p>", unsafe_allow_html=True)
 
-        # ✅ Share link appears directly under the score once game is over
-        share_text = f"I scored {found_ct}/{total} in {st.session_state.final_time}s on the NFL Box Score Guesser! 🏈 Play at www.NFLBoxScoreGuesser.com"
+        share_text = f"I scored {found_ct}/{total} in {st.session_state.final_time}s on the NFL Box Score Guesser! 🏈"
         url = "https://x.com/intent/tweet?text=" + urllib.parse.quote(share_text)
         st.markdown(f"<p style='text-align:center;'><a href='{url}' target='_blank'>Share on X</a></p>", unsafe_allow_html=True)
 
-
 # =========================
-# Stats sections with HTML tables
+# Stats sections
 # =========================
 def render_section(title, parser, cols):
     st.markdown(f"<h6 style='margin:3px 0;'>{title}</h6>", unsafe_allow_html=True)
@@ -240,5 +290,3 @@ if not st.session_state.game_over and len(st.session_state.found) == len(all_pla
     st.success(f"🎉 All {len(all_players)} players in {int(time.time() - st.session_state.start_time)} seconds!")
     st.session_state.game_over = True
     st.session_state.final_time = int(time.time() - st.session_state.start_time)
-
-

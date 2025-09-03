@@ -124,7 +124,8 @@ table, th, td {
     padding: 2px 6px;
 }
 th {
-    background-color: #f2f2f2;
+    background-color: var(--secondary-background-color) !important;
+    color: var(--text-color) !important;
     text-align: center;
 }
 td {
